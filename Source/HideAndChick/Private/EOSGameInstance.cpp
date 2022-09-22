@@ -3,7 +3,8 @@
 
 #include "EOSGameInstance.h"
 
-#include "OnlineSubsystem.h"
+
+#include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 
@@ -11,6 +12,7 @@
 
 UEOSGameInstance::UEOSGameInstance()
 {
+	bIsLoggedIn = false;
 }
 
 void UEOSGameInstance::Init()
@@ -20,12 +22,15 @@ void UEOSGameInstance::Init()
 	/*Use Online Subsystem*/
 	OnlineSubsystem = IOnlineSubsystem::Get();
 	
+	/*자격증명*/
+	//Identity = OnlineSubsystem->GetIdentityInterface();
+
+	/*Login EOS*/
 	Login();
 
 	if(OnlineSubsystem)
 	{
 		SessionInterface = OnlineSubsystem->GetSessionInterface();
-
 
 		/*Bind Func*/
 		SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnCreateSessionComplete);
@@ -34,6 +39,7 @@ void UEOSGameInstance::Init()
 
 void UEOSGameInstance::Login()
 {
+	
 	if (OnlineSubsystem)
 	{
 		//Login ID
@@ -45,10 +51,10 @@ void UEOSGameInstance::Login()
 			Credentials.Token = FString();
 			Credentials.Type = FString("accountportal");
 
-
-
 			Identity->OnLoginCompleteDelegates->AddUObject(this, &UEOSGameInstance::OnLoginComplete);
+
 			Identity->Login(0, Credentials);
+			UE_LOG(LogTemp, Warning, TEXT("Login EOS : %d"));
 		}
 	}
 }
@@ -59,43 +65,67 @@ void UEOSGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucce
 
 	if (bWasSuccessful)
 	{
-
+		/*If Create Session Complete Clear Bind*/
 		SessionInterface->ClearOnCreateSessionCompleteDelegates(this);
-
-
 	}
 
 }
 
 void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
+	UE_LOG(LogTemp, Warning, TEXT("OnLoginComplete : %d"), bWasSuccessful);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Login Complete"));
+
+	/*bool Is Login?*/
+	bIsLoggedIn = bWasSuccessful;
+
+	if (bWasSuccessful)
+	{
+		if (IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
+		{
+			/*If Longin EOS Complete Clear Bind*/
+			Identity->ClearOnLoginCompleteDelegates(0, this);
+		}
+
+	}
 
 }
+
+
 
 void UEOSGameInstance::CreateSession()
 {
 
-	UE_LOG(LogTemp, Warning, TEXT("CreateSession : %d"));
+	
 
-	/*Set Session Interface*/
-	if (SessionInterface.IsValid())
+	/*EOS Login Check*/
+	if (bIsLoggedIn)
 	{
-		FOnlineSessionSettings SessionSettings;
-		SessionSettings.bIsDedicated = false;
-		SessionSettings.bShouldAdvertise = true;
-		SessionSettings.bIsLANMatch = true;
-		SessionSettings.NumPublicConnections = 5;
-		SessionSettings.bAllowJoinInProgress = true;
-		SessionSettings.bAllowJoinViaPresence = true;
-		SessionSettings.bUsesPresence = true;
+		UE_LOG(LogTemp, Warning, TEXT("Create Session"));
+
+		/*Set Session Interface*/
+		if (SessionInterface.IsValid())
+		{
+			FOnlineSessionSettings SessionSettings;
+			SessionSettings.bIsDedicated = false;
+			SessionSettings.bShouldAdvertise = true;
+			SessionSettings.bIsLANMatch = true;
+			SessionSettings.NumPublicConnections = 5;
+			SessionSettings.bAllowJoinInProgress = true;
+			SessionSettings.bAllowJoinViaPresence = true;
+			SessionSettings.bUsesPresence = true;
 
 
 
-		SessionInterface->CreateSession(0, FName("Create Session"), SessionSettings);
+			SessionInterface->CreateSession(0, FName("Create Session"), SessionSettings);
 
 
+		}
 	}
-
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cannot Create Session : Not Logged In"));
+	}
 }
 
 

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSubsystem.h"
 #include "EOSGameInstance.generated.h"
 
 
@@ -28,7 +28,8 @@ protected:
 	/*Session Interface*/
 	IOnlineSessionPtr SessionInterface;
 
-	
+	/*EOS Login Identity*/
+	//IOnlineIdentityPtr Identity;
 
 
 protected:
@@ -50,6 +51,9 @@ protected:
 	void CreateSession();
 
 
+protected:
+	/*EOS Login check*/
+	bool bIsLoggedIn;
 
 
 
