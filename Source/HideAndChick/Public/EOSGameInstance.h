@@ -33,9 +33,12 @@ protected:
 	/*Initialize*/
 	virtual void Init() override;
 
+	/*Bind On Create Session Complete */
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 
 protected:
-
+	UFUNCTION(BlueprintCallable)
+	void CreateSession();
 
 
 
