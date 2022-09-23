@@ -9,7 +9,7 @@
 #include "Interfaces/OnlineIdentityInterface.h"
 
 
-
+	
 UEOSGameInstance::UEOSGameInstance()
 {
 	bIsLoggedIn = false;
@@ -65,7 +65,7 @@ void UEOSGameInstance::Login()
 			//계정 자격 증명(개발자 전용)
 			FOnlineAccountCredentials Credentials;
 			Credentials.Id = FString("127.0.0.1:8081");
-			Credentials.Token = FString("JMCredName");
+			Credentials.Token = FString("HACCredential");
 			Credentials.Type = FString("developer");
 
 			////계정 자격 증명
@@ -124,7 +124,7 @@ void UEOSGameInstance::CreateSession()
 	/*EOS Login Check*/
 	if (bIsLoggedIn)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Create Session"));
+		
 
 		/*Set Session Interface*/
 		if (SessionInterface.IsValid())
@@ -132,19 +132,20 @@ void UEOSGameInstance::CreateSession()
 			FOnlineSessionSettings SessionSettings;
 			SessionSettings.bIsDedicated = false;
 			SessionSettings.bShouldAdvertise = true;
-			SessionSettings.bIsLANMatch = true;
+			SessionSettings.bIsLANMatch = false;
 			SessionSettings.NumPublicConnections = 5;
 			SessionSettings.bAllowJoinInProgress = true;
 			SessionSettings.bAllowJoinViaPresence = true;
 			SessionSettings.bUsesPresence = true;
+			SessionSettings.bUseLobbiesIfAvailable = true;
 
-
+			SessionSettings.Set(SEARCH_KEYWORDS, FString("HACLobby"), EOnlineDataAdvertisementType::ViaOnlineService);
 
 			SessionInterface->CreateSession(0, FName("Create Session"), SessionSettings);
 
-
+			UE_LOG(LogTemp, Warning, TEXT("Create Session"));
 		}
-	}
+	} 
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Cannot Create Session : Not Logged In"));

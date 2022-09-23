@@ -21,15 +21,10 @@ public:
 	//constructor
 	UEOSGameInstance();
 
-
-public:
-
-
-public:
+protected:
 	/*Online Subsystem*/
 	class IOnlineSubsystem* OnlineSubsystem;
 
-public:
 	/*Session Interface*/
 	IOnlineSessionPtr SessionInterface;
 
@@ -37,7 +32,7 @@ public:
 	IOnlineIdentityPtr Identity;
 
 
-public:
+protected:
 	/*Initialize*/
 	virtual void Init() override;
 
@@ -52,13 +47,13 @@ public:
 
 
 
-public:
+protected:
 	/*Create Session*/
 	UFUNCTION(BlueprintCallable)
 	void CreateSession();
 
 	
-public:
+protected:
 	/*EOS Login check*/
 	bool bIsLoggedIn;
 
