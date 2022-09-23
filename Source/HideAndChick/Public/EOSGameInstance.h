@@ -21,37 +21,44 @@ public:
 	//constructor
 	UEOSGameInstance();
 
-protected:
+
+public:
+
+
+public:
 	/*Online Subsystem*/
 	class IOnlineSubsystem* OnlineSubsystem;
 
+public:
 	/*Session Interface*/
 	IOnlineSessionPtr SessionInterface;
 
 	/*EOS Login Identity*/
-	//IOnlineIdentityPtr Identity;
+	IOnlineIdentityPtr Identity;
 
 
-protected:
+public:
 	/*Initialize*/
 	virtual void Init() override;
 
 	/*Login to EOS */
 	void Login();
 
-	/*Bind On Create Session Complete */
-	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
-
 	/*Bind On Login Complete (EOS)*/
 	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 
-protected:
+	/*Bind On Create Session Complete */
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+
+
+public:
 	/*Create Session*/
 	UFUNCTION(BlueprintCallable)
 	void CreateSession();
 
-
-protected:
+	
+public:
 	/*EOS Login check*/
 	bool bIsLoggedIn;
 

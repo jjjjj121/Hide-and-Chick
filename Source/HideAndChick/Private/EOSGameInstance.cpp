@@ -23,10 +23,27 @@ void UEOSGameInstance::Init()
 	OnlineSubsystem = IOnlineSubsystem::Get();
 	
 	/*자격증명*/
-	//Identity = OnlineSubsystem->GetIdentityInterface();
+	Identity = OnlineSubsystem->GetIdentityInterface();
+	
+	if (Identity.IsValid())
+	{
+		/*Bind Login Complete*/
+		Identity->OnLoginCompleteDelegates->AddUObject(this, &UEOSGameInstance::OnLoginComplete);
+		if (Identity->OnLoginCompleteDelegates->IsBound())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Bind Succeeeded"));
 
-	/*Login EOS*/
-	Login();
+			/*Login EOS*/
+			Login();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Bind Failed"));
+		}
+
+		
+	}
+
 
 	if(OnlineSubsystem)
 	{
@@ -39,19 +56,24 @@ void UEOSGameInstance::Init()
 
 void UEOSGameInstance::Login()
 {
-	
+
 	if (OnlineSubsystem)
 	{
 		//Login ID
-		if (IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
+		if (Identity.IsValid())
 		{
-			//계정 자격 증명
+			//계정 자격 증명(개발자 전용)
 			FOnlineAccountCredentials Credentials;
-			Credentials.Id = FString();
-			Credentials.Token = FString();
-			Credentials.Type = FString("accountportal");
+			Credentials.Id = FString("127.0.0.1:8081");
+			Credentials.Token = FString("JMCredName");
+			Credentials.Type = FString("developer");
 
-			Identity->OnLoginCompleteDelegates->AddUObject(this, &UEOSGameInstance::OnLoginComplete);
+			////계정 자격 증명
+			//FOnlineAccountCredentials Credentials;
+			//Credentials.Id = FString("");
+			//Credentials.Token = FString("");
+			//Credentials.Type = FString("accountportal");
+
 
 			Identity->Login(0, Credentials);
 			UE_LOG(LogTemp, Warning, TEXT("Login EOS : %d"));
@@ -62,7 +84,7 @@ void UEOSGameInstance::Login()
 void UEOSGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnCreateSessionComplete : %d"), bWasSuccessful);
-
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, TEXT("Session Create Succeeded"));
 	if (bWasSuccessful)
 	{
 		/*If Create Session Complete Clear Bind*/
@@ -71,9 +93,10 @@ void UEOSGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucce
 
 }
 
+
 void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnLoginComplete : %d"), bWasSuccessful);
+	UE_LOG(LogTemp, Warning, TEXT("Login Complete"));
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Login Complete"));
 
 	/*bool Is Login?*/
@@ -81,7 +104,7 @@ void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, 
 
 	if (bWasSuccessful)
 	{
-		if (IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
+		if (Identity.IsValid())
 		{
 			/*If Longin EOS Complete Clear Bind*/
 			Identity->ClearOnLoginCompleteDelegates(0, this);
