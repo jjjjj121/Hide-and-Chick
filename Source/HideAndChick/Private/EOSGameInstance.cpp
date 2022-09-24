@@ -8,7 +8,7 @@
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 
-
+const FName HACSessionName = FName("HACSession");
 	
 UEOSGameInstance::UEOSGameInstance()
 {
@@ -51,6 +51,9 @@ void UEOSGameInstance::Init()
 
 		/*Bind Func*/
 		SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnCreateSessionComplete);
+
+		SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnDestroySessionComplete);
+
 	}
 }
 
@@ -93,6 +96,18 @@ void UEOSGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucce
 
 }
 
+void UEOSGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnDestroySessionComplete : %d"), bWasSuccessful);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, TEXT("Session Destroy Succeeded"));
+	if (bWasSuccessful)
+	{
+		/*If Destroy Session Complete Clear Bind*/
+		SessionInterface->ClearOnDestroySessionCompleteDelegates(this);
+	}
+
+}
+
 
 void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
@@ -119,8 +134,6 @@ void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, 
 void UEOSGameInstance::CreateSession()
 {
 
-	
-
 	/*EOS Login Check*/
 	if (bIsLoggedIn)
 	{
@@ -141,15 +154,33 @@ void UEOSGameInstance::CreateSession()
 
 			SessionSettings.Set(SEARCH_KEYWORDS, FString("HACLobby"), EOnlineDataAdvertisementType::ViaOnlineService);
 
-			SessionInterface->CreateSession(0, FName("Create Session"), SessionSettings);
+			SessionInterface->CreateSession(0, HACSessionName, SessionSettings);
 
-			UE_LOG(LogTemp, Warning, TEXT("Create Session"));
+			UE_LOG(LogTemp, Warning, TEXT("HACSession")); 
 		}
 	} 
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Cannot Create Session : Not Logged In"));
 	}
+}
+
+void UEOSGameInstance::DestorySession()
+{
+	/*EOS Login Check*/
+	if (bIsLoggedIn)
+	{
+		/*Set Session Interface*/
+		if (SessionInterface.IsValid())
+		{
+			SessionInterface->DestroySession(HACSessionName);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cannot Destroy Session : Not Logged In"));
+	}
+
 }
 
 

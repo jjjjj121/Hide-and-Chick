@@ -45,14 +45,19 @@ protected:
 	/*Bind On Create Session Complete */
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 
-
+	/*Bind On Destroy Session Complete */
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
 protected:
 	/*Create Session*/
 	UFUNCTION(BlueprintCallable)
 	void CreateSession();
 
-	
+	/*Destroy Session*/
+	UFUNCTION(BlueprintCallable)
+	void DestorySession();
+
+
 protected:
 	/*EOS Login check*/
 	bool bIsLoggedIn;
