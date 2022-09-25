@@ -8,11 +8,11 @@
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineFriendsInterface.h"
 #include "OnlineSessionSettings.h"
-
+#include "Kismet/GameplayStatics.h"
 
 
 const FName HACSessionName = FName("HACSession");
-	
+
 UEOSGameInstance::UEOSGameInstance()
 {
 	bIsLoggedIn = false;
@@ -24,7 +24,7 @@ void UEOSGameInstance::Init()
 
 	/*Use Online Subsystem*/
 	OnlineSubsystem = IOnlineSubsystem::Get();
-	
+
 	/*자격증명*/
 	Identity = OnlineSubsystem->GetIdentityInterface();
 
@@ -44,11 +44,11 @@ void UEOSGameInstance::Init()
 			UE_LOG(LogTemp, Warning, TEXT("Bind Failed"));
 		}
 
-		
+
 	}
 
 
-	if(OnlineSubsystem)
+	if (OnlineSubsystem)
 	{
 		SessionInterface = OnlineSubsystem->GetSessionInterface();
 
@@ -68,17 +68,17 @@ void UEOSGameInstance::Login()
 		//Login ID
 		if (Identity.IsValid())
 		{
-			//계정 자격 증명(개발자 전용)
-			FOnlineAccountCredentials Credentials;
-			Credentials.Id = FString("127.0.0.1:8081");
-			Credentials.Token = FString("HACCredential");
-			Credentials.Type = FString("developer");
-
-			////계정 자격 증명
+			////계정 자격 증명(개발자 전용)
 			//FOnlineAccountCredentials Credentials;
-			//Credentials.Id = FString("");
-			//Credentials.Token = FString("");
-			//Credentials.Type = FString("accountportal");
+			//Credentials.Id = FString("127.0.0.1:8081");
+			//Credentials.Token = FString("HACCredential");
+			//Credentials.Type = FString("developer");
+
+			//계정 자격 증명
+			FOnlineAccountCredentials Credentials;
+			Credentials.Id = FString("");
+			Credentials.Token = FString("");
+			Credentials.Type = FString("accountportal");
 
 
 			Identity->Login(0, Credentials);
@@ -95,6 +95,8 @@ void UEOSGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucce
 	{
 		/*If Create Session Complete Clear Bind*/
 		SessionInterface->ClearOnCreateSessionCompleteDelegates(this);
+
+		GetWorld()->ServerTravel("/Game/HideandChick/Level/Lobby_Level?listen");
 	}
 
 }
@@ -126,7 +128,7 @@ void UEOSGameInstance::OnGetAllFriendsComplete(int32 LocalUserNum, bool bWasSucc
 				/*Get Friends List */
 				if (FriendsInterface->GetFriendsList(0, ListName, FriendsList))
 				{
-					
+
 					for (TSharedRef<FOnlineFriend> Friend : FriendsList)
 					{
 						UE_LOG(LogTemp, Warning, TEXT("Get Friend!"));
@@ -147,7 +149,7 @@ void UEOSGameInstance::OnGetAllFriendsComplete(int32 LocalUserNum, bool bWasSucc
 	}
 }
 
-void UEOSGameInstance::OnFindeSessionComplete(bool bWasSuccessful)
+void UEOSGameInstance::OnFindSessionComplete(bool bWasSuccessful)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Find Session Complete : %d"), bWasSuccessful);
 
@@ -155,7 +157,35 @@ void UEOSGameInstance::OnFindeSessionComplete(bool bWasSuccessful)
 	{
 		/*Show Found Lobbies Num*/
 		UE_LOG(LogTemp, Warning, TEXT("Found %d Lobbies"), SearchSettings->SearchResults.Num());
-		
+
+		/*Is Valid Session Interface*/
+		if (SessionInterface.IsValid())
+		{
+
+			TArray<FOnlineSessionSearchResult> SearchResults = SearchSettings->SearchResults;
+
+			for (FOnlineSessionSearchResult Result : SearchResults)
+			{
+				FString Lobbies = Result.Session.OwningUserName;
+				UE_LOG(LogTemp, Warning, TEXT("Session.OwningUsername : %s"), *Lobbies);
+				Lobbies;
+				UE_LOG(LogTemp, Warning, TEXT("Session.Info.ToString : %s"), *Lobbies);
+				Lobbies = Result.GetSessionIdStr();
+				UE_LOG(LogTemp, Warning, TEXT("SessionIdStr : %s"), *Lobbies);
+
+			}
+
+
+
+			if (SearchSettings->SearchResults.Num())
+			{
+				SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnJoinSessionComplete);
+				SessionInterface->JoinSession(0, HACSessionName, SearchSettings->SearchResults[0]);
+			}
+
+		}
+
+
 	}
 
 	/*Is Valid Session Interface*/
@@ -166,6 +196,30 @@ void UEOSGameInstance::OnFindeSessionComplete(bool bWasSuccessful)
 	}
 
 }
+
+void UEOSGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+
+	/*Is Valid SessionInterface*/
+	if (SessionInterface.IsValid())
+	{
+		FString ConnectionInfo = FString();
+		SessionInterface->GetResolvedConnectString(SessionName, ConnectionInfo);
+		if (!ConnectionInfo.IsEmpty())
+		{
+			if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+			{
+				PC->ClientTravel(ConnectionInfo, TRAVEL_Absolute);
+
+			}
+		}
+	}
+
+
+
+}
+
+
 
 
 void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
@@ -196,7 +250,7 @@ void UEOSGameInstance::CreateSession()
 	/*EOS Login Check*/
 	if (bIsLoggedIn)
 	{
-		
+
 
 		/*Is Valid Session Interface*/
 		if (SessionInterface.IsValid())
@@ -210,14 +264,16 @@ void UEOSGameInstance::CreateSession()
 			SessionSettings.bAllowJoinViaPresence = true;
 			SessionSettings.bUsesPresence = true;
 			SessionSettings.bUseLobbiesIfAvailable = true;
+			
+			
 
 			SessionSettings.Set(SEARCH_KEYWORDS, FString("HACLobby"), EOnlineDataAdvertisementType::ViaOnlineService);
 
 			SessionInterface->CreateSession(0, HACSessionName, SessionSettings);
 
-			UE_LOG(LogTemp, Warning, TEXT("HACSession")); 
+			UE_LOG(LogTemp, Warning, TEXT("HACSession"));
 		}
-	} 
+	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Cannot Create Session : Not Logged In"));
@@ -234,14 +290,14 @@ void UEOSGameInstance::FindSession()
 		{
 			/*Search Settings (Match Create Session Settings)*/
 			SearchSettings = MakeShareable(new FOnlineSessionSearch());
-			
+
 			SearchSettings->MaxSearchResults = 1000;
 			SearchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("HACLobby"), EOnlineComparisonOp::Equals);
 			SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 
 
 			/*bind Find Session Complete*/
-			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnFindeSessionComplete);
+			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnFindSessionComplete);
 
 			/*Search Session*/
 			SessionInterface->FindSessions(0, SearchSettings.ToSharedRef());
@@ -285,7 +341,7 @@ void UEOSGameInstance::GetAllFriends()
 			{
 				/*Read Friends List And Bind Complete Func*/
 				FriendsInterface->ReadFriendsList(0, FString(""), FOnReadFriendsListComplete::CreateUObject(this, &UEOSGameInstance::OnGetAllFriendsComplete));
-				
+
 			}
 		}
 	}

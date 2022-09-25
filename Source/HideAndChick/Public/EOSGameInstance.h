@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
+
 #include "EOSGameInstance.generated.h"
+
 
 class FOnlineSessionSearch;
 
@@ -57,7 +60,11 @@ protected:
 	/*Bind On Get All Friends Complete */
 	void OnGetAllFriendsComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorStr);
 
-	void OnFindeSessionComplete(bool bWasSuccessful);
+	/*Bind On Find Session Complete*/
+	void OnFindSessionComplete(bool bWasSuccessful);
+
+	/*Bind On Join Session Complete*/
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 protected:
 	/*Create Session*/
