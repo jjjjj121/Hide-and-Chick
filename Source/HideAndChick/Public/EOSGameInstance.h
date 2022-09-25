@@ -7,6 +7,8 @@
 #include "OnlineSubsystem.h"
 #include "EOSGameInstance.generated.h"
 
+class FOnlineSessionSearch;
+
 /**
  * 
  */
@@ -33,6 +35,9 @@ protected:
 	/*Friends Interface*/
 	IOnlineFriendsPtr FriendsInterface;
 
+	/*Find Session Settings*/
+	TSharedPtr<FOnlineSessionSearch> SearchSettings;
+
 protected:
 	/*Initialize*/
 	virtual void Init() override;
@@ -52,10 +57,16 @@ protected:
 	/*Bind On Get All Friends Complete */
 	void OnGetAllFriendsComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorStr);
 
+	void OnFindeSessionComplete(bool bWasSuccessful);
+
 protected:
 	/*Create Session*/
 	UFUNCTION(BlueprintCallable)
 	void CreateSession();
+
+	/*Find Session*/
+	UFUNCTION(BlueprintCallable)
+	void FindSession();
 
 	/*Destroy Session*/
 	UFUNCTION(BlueprintCallable)

@@ -147,6 +147,26 @@ void UEOSGameInstance::OnGetAllFriendsComplete(int32 LocalUserNum, bool bWasSucc
 	}
 }
 
+void UEOSGameInstance::OnFindeSessionComplete(bool bWasSuccessful)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Find Session Complete : %d"), bWasSuccessful);
+
+	if (bWasSuccessful)
+	{
+		/*Show Found Lobbies Num*/
+		UE_LOG(LogTemp, Warning, TEXT("Found %d Lobbies"), SearchSettings->SearchResults.Num());
+		
+	}
+
+	/*Is Valid Session Interface*/
+	if (SessionInterface.IsValid())
+	{
+		/*Search Session*/
+		SessionInterface->ClearOnFindSessionsCompleteDelegates(this);
+	}
+
+}
+
 
 void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
@@ -202,6 +222,36 @@ void UEOSGameInstance::CreateSession()
 	{
 		UE_LOG(LogTemp, Error, TEXT("Cannot Create Session : Not Logged In"));
 	}
+}
+
+void UEOSGameInstance::FindSession()
+{
+	/*EOS Login Check*/
+	if (bIsLoggedIn)
+	{
+		/*Is Valid Session Interface*/
+		if (SessionInterface.IsValid())
+		{
+			/*Search Settings (Match Create Session Settings)*/
+			SearchSettings = MakeShareable(new FOnlineSessionSearch());
+			
+			SearchSettings->MaxSearchResults = 1000;
+			SearchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("HACLobby"), EOnlineComparisonOp::Equals);
+			SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+
+
+			/*bind Find Session Complete*/
+			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UEOSGameInstance::OnFindeSessionComplete);
+
+			/*Search Session*/
+			SessionInterface->FindSessions(0, SearchSettings.ToSharedRef());
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cannot Find Session : Not Logged In"));
+	}
+
 }
 
 void UEOSGameInstance::DestorySession()
