@@ -7,7 +7,6 @@
 #include "OnlineSubsystem.h"
 #include "EOSGameInstance.generated.h"
 
-
 /**
  * 
  */
@@ -31,6 +30,8 @@ protected:
 	/*EOS Login Identity*/
 	IOnlineIdentityPtr Identity;
 
+	/*Friends Interface*/
+	IOnlineFriendsPtr FriendsInterface;
 
 protected:
 	/*Initialize*/
@@ -48,6 +49,9 @@ protected:
 	/*Bind On Destroy Session Complete */
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
+	/*Bind On Get All Friends Complete */
+	void OnGetAllFriendsComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorStr);
+
 protected:
 	/*Create Session*/
 	UFUNCTION(BlueprintCallable)
@@ -57,6 +61,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void DestorySession();
 
+	/*Get Friends List*/
+	UFUNCTION(BlueprintCallable)
+	void GetAllFriends();
 
 protected:
 	/*EOS Login check*/

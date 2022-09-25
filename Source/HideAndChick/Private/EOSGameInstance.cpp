@@ -5,8 +5,11 @@
 
 
 #include "Interfaces/OnlineSessionInterface.h"
-#include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineIdentityInterface.h"
+#include "Interfaces/OnlineFriendsInterface.h"
+#include "OnlineSessionSettings.h"
+
+
 
 const FName HACSessionName = FName("HACSession");
 	
@@ -24,7 +27,7 @@ void UEOSGameInstance::Init()
 	
 	/*자격증명*/
 	Identity = OnlineSubsystem->GetIdentityInterface();
-	
+
 	if (Identity.IsValid())
 	{
 		/*Bind Login Complete*/
@@ -108,6 +111,42 @@ void UEOSGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSucc
 
 }
 
+void UEOSGameInstance::OnGetAllFriendsComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorStr)
+{
+	if (bWasSuccessful)
+	{
+		/*Is Valid Online Subsystem*/
+		if (OnlineSubsystem)
+		{
+			/*Is Valid FriendsInterface*/
+			if (FriendsInterface.IsValid())
+			{
+
+				TArray<TSharedRef<FOnlineFriend>> FriendsList;
+				/*Get Friends List */
+				if (FriendsInterface->GetFriendsList(0, ListName, FriendsList))
+				{
+					
+					for (TSharedRef<FOnlineFriend> Friend : FriendsList)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Get Friend!"));
+						FString FriendName = Friend.Get().GetRealName();
+						UE_LOG(LogTemp, Warning, TEXT("Friend : %s"), *FriendName);
+					}
+
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Failed Get Friends List"));
+				}
+
+			}
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Was Successful At Getting Friends List"));
+	}
+}
+
 
 void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
@@ -139,7 +178,7 @@ void UEOSGameInstance::CreateSession()
 	{
 		
 
-		/*Set Session Interface*/
+		/*Is Valid Session Interface*/
 		if (SessionInterface.IsValid())
 		{
 			FOnlineSessionSettings SessionSettings;
@@ -170,7 +209,7 @@ void UEOSGameInstance::DestorySession()
 	/*EOS Login Check*/
 	if (bIsLoggedIn)
 	{
-		/*Set Session Interface*/
+		/*Is Valid Session Interface*/
 		if (SessionInterface.IsValid())
 		{
 			SessionInterface->DestroySession(HACSessionName);
@@ -181,6 +220,29 @@ void UEOSGameInstance::DestorySession()
 		UE_LOG(LogTemp, Error, TEXT("Cannot Destroy Session : Not Logged In"));
 	}
 
+}
+
+void UEOSGameInstance::GetAllFriends()
+{
+	/*EOS Login Check*/
+	if (bIsLoggedIn)
+	{
+		/*Is Valid Online Subsystem*/
+		if (OnlineSubsystem)
+		{
+			/*FriendsInterface*/
+			if (FriendsInterface = OnlineSubsystem->GetFriendsInterface())
+			{
+				/*Read Friends List And Bind Complete Func*/
+				FriendsInterface->ReadFriendsList(0, FString(""), FOnReadFriendsListComplete::CreateUObject(this, &UEOSGameInstance::OnGetAllFriendsComplete));
+				
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cannot Load Frinds List : Not Logged In"));
+	}
 }
 
 
