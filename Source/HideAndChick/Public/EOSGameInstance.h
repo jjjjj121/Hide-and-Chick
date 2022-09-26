@@ -41,6 +41,12 @@ protected:
 	/*Find Session Settings*/
 	TSharedPtr<FOnlineSessionSearch> SearchSettings;
 
+	/*UI Interface*/
+	IOnlineExternalUIPtr UIInterface;
+
+	/*Voice Chat Interface*/
+	IOnlineVoicePtr VoiceInterface;
+
 protected:
 	/*Initialize*/
 	virtual void Init() override;
@@ -82,6 +88,14 @@ protected:
 	/*Get Friends List*/
 	UFUNCTION(BlueprintCallable)
 	void GetAllFriends();
+
+	/*Show Friends UI)*/
+	UFUNCTION(BlueprintCallable)
+	void ShowUI();
+
+	/*Show Invite Session UI (Invite Friends)*/
+	UFUNCTION(BlueprintCallable)
+	void ShowInviteUI();
 
 protected:
 	/*EOS Login check*/

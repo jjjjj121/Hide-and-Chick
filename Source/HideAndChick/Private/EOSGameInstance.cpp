@@ -7,6 +7,8 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineFriendsInterface.h"
+#include "Interfaces/OnlineExternalUIInterface.h"
+#include "Interfaces/VoiceInterface.h"
 #include "OnlineSessionSettings.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -28,6 +30,8 @@ void UEOSGameInstance::Init()
 	/*자격증명*/
 	Identity = OnlineSubsystem->GetIdentityInterface();
 
+	VoiceInterface = OnlineSubsystem->GetVoiceInterface();
+	
 	if (Identity.IsValid())
 	{
 		/*Bind Login Complete*/
@@ -38,13 +42,14 @@ void UEOSGameInstance::Init()
 
 			/*Login EOS*/
 			Login();
+			UE_LOG(LogTemp, Warning, TEXT("Try Login EOS"));
 		}
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Bind Failed"));
 		}
 
-
+		
 	}
 
 
@@ -80,9 +85,10 @@ void UEOSGameInstance::Login()
 			Credentials.Token = FString("");
 			Credentials.Type = FString("accountportal");
 
-
+			
+			
 			Identity->Login(0, Credentials);
-			UE_LOG(LogTemp, Warning, TEXT("Login EOS : %d"));
+			
 		}
 	}
 }
@@ -224,14 +230,16 @@ void UEOSGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 
 void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Login Complete"));
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Login Complete"));
 
 	/*bool Is Login?*/
 	bIsLoggedIn = bWasSuccessful;
 
 	if (bWasSuccessful)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Login Complete"));
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Login Complete"));
+
+
 		if (Identity.IsValid())
 		{
 			/*If Longin EOS Complete Clear Bind*/
@@ -239,7 +247,11 @@ void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, 
 		}
 
 	}
-
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Login Failed"));
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Login Failed"));
+	}
 }
 
 
@@ -264,12 +276,16 @@ void UEOSGameInstance::CreateSession()
 			SessionSettings.bAllowJoinViaPresence = true;
 			SessionSettings.bUsesPresence = true;
 			SessionSettings.bUseLobbiesIfAvailable = true;
-			
-			
+			SessionSettings.bUseLobbiesVoiceChatIfAvailable = true;
+			SessionSettings.bAllowInvites = true;
 
 			SessionSettings.Set(SEARCH_KEYWORDS, FString("HACLobby"), EOnlineDataAdvertisementType::ViaOnlineService);
 
 			SessionInterface->CreateSession(0, HACSessionName, SessionSettings);
+
+
+
+			
 
 			UE_LOG(LogTemp, Warning, TEXT("HACSession"));
 		}
@@ -348,6 +364,38 @@ void UEOSGameInstance::GetAllFriends()
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Cannot Load Frinds List : Not Logged In"));
+	}
+}
+
+void UEOSGameInstance::ShowUI()
+{
+	/*EOS Login Check*/
+	if (bIsLoggedIn)
+	{
+		/*Is Valid Online Subsystem*/
+		if (OnlineSubsystem)
+		{
+			if (UIInterface = OnlineSubsystem->GetExternalUIInterface())
+			{
+				UIInterface->ShowFriendsUI(0);
+			}
+		}
+	}
+}
+
+void UEOSGameInstance::ShowInviteUI()
+{
+	/*EOS Login Check*/
+	if (bIsLoggedIn)
+	{
+		/*Is Valid Online Subsystem*/
+		if (OnlineSubsystem)
+		{
+			if (UIInterface = OnlineSubsystem->GetExternalUIInterface())
+			{
+				UIInterface->ShowInviteUI(0, HACSessionName);
+			}
+		}
 	}
 }
 
