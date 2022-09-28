@@ -6,11 +6,12 @@
 #include "Engine/GameInstance.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
-
+#include "VoiceChat.h"
 #include "EOSGameInstance.generated.h"
 
 
 class FOnlineSessionSearch;
+
 
 /**
  * 
@@ -44,8 +45,12 @@ protected:
 	/*UI Interface*/
 	IOnlineExternalUIPtr UIInterface;
 
-	/*Voice Chat Interface*/
-	IOnlineVoicePtr VoiceInterface;
+	/*Voice Chat*/
+	IVoiceChat* VoiceChat;
+
+	/*Voice Chat User*/
+	IVoiceChatUser* VoiceChatUser;
+	
 
 protected:
 	/*Initialize*/
@@ -72,6 +77,9 @@ protected:
 	/*Bind On Join Session Complete*/
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
+	/*Bind On Join Session Complete*/
+	void OnVoiceLoginComplete(const FString&  PlayerName , const FVoiceChatResult&  Result);
+
 protected:
 	/*Create Session*/
 	UFUNCTION(BlueprintCallable)
@@ -96,6 +104,14 @@ protected:
 	/*Show Invite Session UI (Invite Friends)*/
 	UFUNCTION(BlueprintCallable)
 	void ShowInviteUI();
+
+	/*Login Voice*/
+	UFUNCTION(BlueprintCallable)
+	void VoiceLogin();
+
+	/*Login Voice*/
+	UFUNCTION(BlueprintCallable)
+	void VoiceReleaseUser();
 
 protected:
 	/*EOS Login check*/

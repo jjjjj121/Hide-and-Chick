@@ -9,6 +9,7 @@
 #include "Interfaces/OnlineFriendsInterface.h"
 #include "Interfaces/OnlineExternalUIInterface.h"
 #include "Interfaces/VoiceInterface.h"
+#include "OnlineSubsystemEOS.h"
 #include "OnlineSessionSettings.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -30,7 +31,7 @@ void UEOSGameInstance::Init()
 	/*자격증명*/
 	Identity = OnlineSubsystem->GetIdentityInterface();
 
-	VoiceInterface = OnlineSubsystem->GetVoiceInterface();
+	
 	
 	if (Identity.IsValid())
 	{
@@ -225,6 +226,18 @@ void UEOSGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 
 }
 
+void UEOSGameInstance::OnVoiceLoginComplete(const FString& PlayerName, const FVoiceChatResult& Result)
+{
+	if (Result.IsSuccess())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Voice Chat User Login Complete"));
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Voice Chat User Login Complete"));
+		// You can now use this->VoiceChatUser to control the user's voice chat.
+	}
+
+}
+
+
 
 
 
@@ -278,15 +291,16 @@ void UEOSGameInstance::CreateSession()
 			SessionSettings.bUseLobbiesIfAvailable = true;
 			SessionSettings.bUseLobbiesVoiceChatIfAvailable = true;
 			SessionSettings.bAllowInvites = true;
-
+			
 			SessionSettings.Set(SEARCH_KEYWORDS, FString("HACLobby"), EOnlineDataAdvertisementType::ViaOnlineService);
 
 			SessionInterface->CreateSession(0, HACSessionName, SessionSettings);
 
 
 
-			
 
+			
+			
 			UE_LOG(LogTemp, Warning, TEXT("HACSession"));
 		}
 	}
@@ -400,3 +414,30 @@ void UEOSGameInstance::ShowInviteUI()
 }
 
 
+void UEOSGameInstance::VoiceLogin()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Try Voice Login"));
+
+	VoiceChat = IVoiceChat::Get();
+	
+	VoiceChatUser = VoiceChat->CreateUser();
+	
+	TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
+	UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId : %s"), &UserId);
+	FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(*UserId);
+
+	VoiceChatUser->Login(PlatformUserId, UserId->ToString(), TEXT(""), FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceLoginComplete));
+
+}
+
+void UEOSGameInstance::VoiceReleaseUser()
+{
+	VoiceChat = IVoiceChat::Get();
+	if (this->VoiceChatUser != nullptr && VoiceChat != nullptr)
+	{
+
+		UE_LOG(LogTemp, Warning, TEXT("Release Voice Login"));
+		VoiceChat->ReleaseUser(this->VoiceChatUser);
+		this->VoiceChatUser = nullptr;
+	}
+}
