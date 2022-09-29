@@ -9,7 +9,7 @@
 #include "Interfaces/OnlineFriendsInterface.h"
 #include "Interfaces/OnlineExternalUIInterface.h"
 #include "Interfaces/VoiceInterface.h"
-#include "OnlineSubsystemEOS.h"
+//#include "OnlineSubsystemEOS.h"
 #include "OnlineSessionSettings.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -31,8 +31,8 @@ void UEOSGameInstance::Init()
 	/*자격증명*/
 	Identity = OnlineSubsystem->GetIdentityInterface();
 
-	
-	
+
+
 	if (Identity.IsValid())
 	{
 		/*Bind Login Complete*/
@@ -50,7 +50,7 @@ void UEOSGameInstance::Init()
 			UE_LOG(LogTemp, Warning, TEXT("Bind Failed"));
 		}
 
-		
+
 	}
 
 
@@ -86,9 +86,33 @@ void UEOSGameInstance::Login()
 			Credentials.Token = FString("");
 			Credentials.Type = FString("accountportal");
 
-			
-			
+
+
 			Identity->Login(0, Credentials);
+
+		}
+	}
+}
+
+void UEOSGameInstance::Logout()
+{
+
+	if (OnlineSubsystem)
+	{
+		//Login ID
+		if (Identity.IsValid())
+		{
+
+			TSharedPtr<const FUniqueNetId> UserId5 = Identity->GetUniquePlayerId(0);
+			if (Identity->GetLoginStatus(*UserId5))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("State : Is Logged"));
+				Identity->Logout(0);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Error ! State - Is Not Logged"));
+			}
 			
 		}
 	}
@@ -246,9 +270,48 @@ void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, 
 
 	/*bool Is Login?*/
 	bIsLoggedIn = bWasSuccessful;
+	const FUniqueNetId& LocalUserId = UserId;
+	int32 UserNum = LocalUserNum;
+	UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId111 : %s"), &LocalUserId);
+	UE_LOG(LogTemp, Warning, TEXT("Get Local User Num : %d"), &UserNum);
+
+	TSharedPtr<const FUniqueNetId> UserId2 = Identity->GetUniquePlayerId(0);
+	Identity->GetUserAccount(*UserId2);
+	UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId222 : %s"), &UserId2);
+
+	FString Nick = Identity->GetPlayerNickname(0);
+	UE_LOG(LogTemp, Warning, TEXT("Get Local User NickName : %s"), &Nick);
+	
+	
+	FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(LocalUserId);
+	UE_LOG(LogTemp, Warning, TEXT("Get platform User ID : %d"), PlatformUserId);
+	UE_LOG(LogTemp, Warning, TEXT("Get platform User ID &&: %d"), &PlatformUserId);
+	//UE_LOG(LogTemp, Warning, TEXT("Get platform User ID : %s"), PlatformUserId);
+	UE_LOG(LogTemp, Warning, TEXT("Get platform User ID && : %s"), &PlatformUserId);
+	FPlatformUserId PlatformUserId2 = Identity->GetPlatformUserIdFromUniqueNetId(*UserId2);
+	UE_LOG(LogTemp, Warning, TEXT("Get platform Local User ID : %d"), PlatformUserId2);
+	UE_LOG(LogTemp, Warning, TEXT("Get platform Local User ID &&: %d"), &PlatformUserId2);
+	//UE_LOG(LogTemp, Warning, TEXT("Get platform Local User ID : %s"), PlatformUserId2);
+	UE_LOG(LogTemp, Warning, TEXT("Get platform Local User ID &&: %s"), &PlatformUserId2);
+
+	/*Identity -> UserAccount (사용자 계정 정보)*/
+	TSharedPtr <FUserOnlineAccount> UserAccount = Identity->GetUserAccount(LocalUserId);
+	UE_LOG(LogTemp, Warning, TEXT("Get  User Acount : %s"), &UserAccount);
+
+	FUniqueNetIdRef UserID = UserAccount->GetUserId();
+	UE_LOG(LogTemp, Warning, TEXT("Get  User Acount_ GetUserID: %s"), &UserID);
+
+	FString RealName = UserAccount->GetRealName();
+	UE_LOG(LogTemp, Warning, TEXT("Get  User Acount_ RealName : %s"), &RealName);
+
+	FString AccessToken = UserAccount->GetAccessToken();
+	UE_LOG(LogTemp, Warning, TEXT("Get  User Acount_ AccessToken : %s"), &AccessToken);
+
+
 
 	if (bWasSuccessful)
 	{
+
 		UE_LOG(LogTemp, Warning, TEXT("Login Complete"));
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Login Complete"));
 
@@ -259,12 +322,16 @@ void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, 
 			Identity->ClearOnLoginCompleteDelegates(0, this);
 		}
 
+
+
+
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Login Failed"));
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Login Failed"));
 	}
+
 }
 
 
@@ -291,7 +358,7 @@ void UEOSGameInstance::CreateSession()
 			SessionSettings.bUseLobbiesIfAvailable = true;
 			SessionSettings.bUseLobbiesVoiceChatIfAvailable = true;
 			SessionSettings.bAllowInvites = true;
-			
+
 			SessionSettings.Set(SEARCH_KEYWORDS, FString("HACLobby"), EOnlineDataAdvertisementType::ViaOnlineService);
 
 			SessionInterface->CreateSession(0, HACSessionName, SessionSettings);
@@ -299,9 +366,17 @@ void UEOSGameInstance::CreateSession()
 
 
 
-			
-			
+
+
 			UE_LOG(LogTemp, Warning, TEXT("HACSession"));
+
+
+			//TSharedPtr<const FUniqueNetId> UserId33 = Identity->GetUniquePlayerId(0);
+			//UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId : %s"), &UserId33);
+			//FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(*UserId33);
+
+			//VoiceChatUser->Login(PlatformUserId, UserId33->ToString(), TEXT(""), FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceLoginComplete));
+
 		}
 	}
 	else
@@ -419,14 +494,23 @@ void UEOSGameInstance::VoiceLogin()
 	UE_LOG(LogTemp, Warning, TEXT("Try Voice Login"));
 
 	VoiceChat = IVoiceChat::Get();
-	
+
 	VoiceChatUser = VoiceChat->CreateUser();
-	
+
 	TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
 	UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId : %s"), &UserId);
 	FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(*UserId);
 
 	VoiceChatUser->Login(PlatformUserId, UserId->ToString(), TEXT(""), FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceLoginComplete));
+
+
+
+	//
+	//TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
+	//UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId : %s"), &UserId);
+	//FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(*UserId);
+
+	//VoiceChatUser->Login(PlatformUserId, UserId->ToString(), TEXT(""), FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceLoginComplete));
 
 }
 
@@ -440,4 +524,13 @@ void UEOSGameInstance::VoiceReleaseUser()
 		VoiceChat->ReleaseUser(this->VoiceChatUser);
 		this->VoiceChatUser = nullptr;
 	}
+}
+
+void UEOSGameInstance::VoiceTest()
+{
+	VoiceChat = IVoiceChat::Get();
+	VoiceChatUser = VoiceChat->CreateUser();
+	//Identity->player
+
+
 }

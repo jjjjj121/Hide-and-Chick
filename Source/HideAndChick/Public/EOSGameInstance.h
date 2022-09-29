@@ -56,9 +56,6 @@ protected:
 	/*Initialize*/
 	virtual void Init() override;
 
-	/*Login to EOS */
-	void Login();
-
 	/*Bind On Login Complete (EOS)*/
 	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 
@@ -112,6 +109,17 @@ protected:
 	/*Login Voice*/
 	UFUNCTION(BlueprintCallable)
 	void VoiceReleaseUser();
+
+	UFUNCTION(BlueprintCallable)
+	void VoiceTest();
+
+	UFUNCTION(BlueprintCallable)
+	/*Login to EOS */
+	void Login();
+
+	/*Logout to EOS */
+	UFUNCTION(BlueprintCallable)
+	void Logout();
 
 protected:
 	/*EOS Login check*/
