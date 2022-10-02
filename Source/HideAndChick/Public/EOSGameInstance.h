@@ -18,7 +18,7 @@ class FOnlineSessionSearch;
  */
 UCLASS()
 class HIDEANDCHICK_API UEOSGameInstance : public UGameInstance
-{
+{ 
 	GENERATED_BODY()
 	
 
@@ -76,6 +76,11 @@ protected:
 
 	/*Bind On Join Session Complete*/
 	void OnVoiceLoginComplete(const FString&  PlayerName , const FVoiceChatResult&  Result);
+
+	/*Bind On Join Session Complete*/
+	void OnVoiceChatConnectComplete(const FVoiceChatResult& Result);
+
+	
 
 protected:
 	/*Create Session*/

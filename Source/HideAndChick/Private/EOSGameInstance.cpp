@@ -9,6 +9,7 @@
 #include "Interfaces/OnlineFriendsInterface.h"
 #include "Interfaces/OnlineExternalUIInterface.h"
 #include "Interfaces/VoiceInterface.h"
+#include "OnlineSubsystemUtils.h"
 //#include "OnlineSubsystemEOS.h"
 #include "OnlineSessionSettings.h"
 #include "Kismet/GameplayStatics.h"
@@ -261,6 +262,20 @@ void UEOSGameInstance::OnVoiceLoginComplete(const FString& PlayerName, const FVo
 
 }
 
+void UEOSGameInstance::OnVoiceChatConnectComplete(const FVoiceChatResult& Result)
+{
+
+	if (Result.IsSuccess())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("On Voice Chat Connect Complete"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("On Voice Chat Connect Failed"));
+	}
+
+}
+
 
 
 
@@ -273,7 +288,7 @@ void UEOSGameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, 
 	const FUniqueNetId& LocalUserId = UserId;
 	int32 UserNum = LocalUserNum;
 	UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId111 : %s"), &LocalUserId);
-	UE_LOG(LogTemp, Warning, TEXT("Get Local User Num : %d"), &UserNum);
+	UE_LOG(LogTemp, Warning, TEXT("Get Local User Num : %d"), UserNum);
 
 	TSharedPtr<const FUniqueNetId> UserId2 = Identity->GetUniquePlayerId(0);
 	Identity->GetUserAccount(*UserId2);
@@ -351,7 +366,7 @@ void UEOSGameInstance::CreateSession()
 			SessionSettings.bIsDedicated = false;
 			SessionSettings.bShouldAdvertise = true;
 			SessionSettings.bIsLANMatch = false;
-			SessionSettings.NumPublicConnections = 5;
+			SessionSettings.NumPublicConnections = 10;
 			SessionSettings.bAllowJoinInProgress = true;
 			SessionSettings.bAllowJoinViaPresence = true;
 			SessionSettings.bUsesPresence = true;
@@ -491,26 +506,72 @@ void UEOSGameInstance::ShowInviteUI()
 
 void UEOSGameInstance::VoiceLogin()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Try Voice Login"));
+	//UE_LOG(LogTemp, Warning, TEXT("Try Voice Login"));
 
-	VoiceChat = IVoiceChat::Get();
-
-	VoiceChatUser = VoiceChat->CreateUser();
-
-	TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
-	UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId : %s"), &UserId);
-	FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(*UserId);
-
-	VoiceChatUser->Login(PlatformUserId, UserId->ToString(), TEXT(""), FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceLoginComplete));
-
-
-
+	//VoiceChat = IVoiceChat::Get();
+	//VoiceChat->Initialize();
+	//VoiceChat->Connect(FOnVoiceChatConnectCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceChatConnectComplete));
+	//FString LoggedName = VoiceChat->GetLoggedInPlayerName();
 	//
+	//UE_LOG(LogTemp, Warning, TEXT("Logged In Player Name : %s"), &LoggedName);
+	//
+
+	//VoiceChatUser = VoiceChat->CreateUser();
+	//
+	//TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
+	//UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId : %s"), &UserId);
+	//FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(*UserId);
+	//FString Name = UserId->ToString();
+	//UE_LOG(LogTemp, Warning, TEXT("To String: %s"), &Name);
+	//FString Name12 = UserId->ToString();
+	//UE_LOG(LogTemp, Warning, TEXT("To String2 : %s"), &Name12);
+	//FString WhatName= Identity->GetUniquePlayerId(0)->ToString();
+	//UE_LOG(LogTemp, Warning, TEXT("Get To String : % s"), &WhatName);
+
+
+	//if (Name == WhatName)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("The Same Name"));
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("Not Same Name"));
+	//}
+
+
+	//VoiceChatUser->Login(PlatformUserId, UserId->ToString(), TEXT(""), FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceLoginComplete));
+
+
+
+	////////////////////////////////////////////////////////////////////////
 	//TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
 	//UE_LOG(LogTemp, Warning, TEXT("Get Unique PlayerId : %s"), &UserId);
 	//FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(*UserId);
 
 	//VoiceChatUser->Login(PlatformUserId, UserId->ToString(), TEXT(""), FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceLoginComplete));
+	////////////////////////////////////////////////////////////////////
+
+	IVoiceChat* TestVoiceChat = IVoiceChat::Get();
+	TestVoiceChat->Initialize();
+	TestVoiceChat->Connect(FOnVoiceChatConnectCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceChatConnectComplete));
+
+
+
+	this->VoiceChatUser = TestVoiceChat->CreateUser();
+	
+
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineIdentityPtr voiceIdentity = Subsystem->GetIdentityInterface();
+
+	TSharedPtr<const FUniqueNetId> UserId = voiceIdentity->GetUniquePlayerId(0);
+	FPlatformUserId PlatformUserId = voiceIdentity->GetPlatformUserIdFromUniqueNetId(*UserId);
+
+	VoiceChatUser->Login(
+		PlatformUserId,
+		UserId->ToString(),
+		TEXT(""),
+		FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &UEOSGameInstance::OnVoiceLoginComplete));
+
 
 }
 
